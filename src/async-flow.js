@@ -8,10 +8,21 @@ function * createPokemonFetcher () {
   return `This pokemon is named ${pokemon.name} and is of the type ${pokemon.types[0].type.name}`;
 };
 
-const pokemonFetcher = createPokemonFetcher();
+const coroutine = (gen) => {
+  const generator = gen();
 
-pokemonFetcher.next().value
-.then(res => pokemonFetcher.next(res).value)
-.then(res => pokemonFetcher.next(res).value)
-.then(pokemonType => console.log(pokemonType))
-.catch(err => console.log(err));
+  const handle = (result) => {
+    if (result.done) {
+      return Promise.resolve(result.value);
+    }
+
+    return Promise.resolve(result.value)
+      .then(res => handle(generator.next(res)));
+  }
+
+  return handle(generator.next());
+}
+
+const pokemonFetcher = coroutine(createPokemonFetcher);
+
+pokemonFetcher.then(pokemonInfo => console.log(pokemonInfo));
