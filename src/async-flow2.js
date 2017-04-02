@@ -9,10 +9,23 @@ function * createPokemonFetcher () {
   return `🔍 Your random pokemon is named ${pokemon.name} and it is of the type(s) 👉 ${types}`;
 };
 
-const pokemonFetcher = createPokemonFetcher();
+const coroutine = (gen) => {
+  const generator = gen();
 
-pokemonFetcher.next().value
-  .then(res => pokemonFetcher.next(res).value)
-  .then(res => pokemonFetcher.next(res).value)
+  const handle = (result) => {
+    if (result.done) {
+      return Promise.resolve(result.value);
+    }
+
+    return Promise.resolve(result.value)
+      .then(res => handle(generator.next(res)));
+  }
+
+  return handle(generator.next());
+}
+
+const pokemonFetcher = coroutine(createPokemonFetcher);
+
+pokemonFetcher
   .then(pokemonType => console.log(pokemonType))
   .catch(err => console.log(err));
